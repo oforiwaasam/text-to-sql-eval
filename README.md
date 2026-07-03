@@ -20,3 +20,18 @@ The model demonstrated severe overconfidence in its SQL generation capabilities:
 ## Future Work
 * Evaluate post-hoc calibration techniques (e.g., Temperature Scaling) to align confidence with accuracy.
 * Expand the evaluation pipeline to multi-turn interactions and larger parameter models.
+
+## Acknowledgements & Citations
+This evaluation framework utilizes the **Spider (1.0)** dataset for complex, cross-domain Text-to-SQL benchmarking. 
+
+> Yu, T., Zhang, R., Yang, K., Yasunaga, M., Wang, D., Li, Z., Ma, J., Li, I., Yao, Q., Roman, S., Zhang, Z., & Radev, D. (2018). *Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task*. EMNLP 2018.
+
+```bibtex
+@inproceedings{Yu&al.18c,
+  title     = {Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task},
+  author    = {Tao Yu and Rui Zhang and Kai Yang and Michihiro Yasunaga and Dongxu Wang and Zifan Li and James Ma and Irene Li and Qingning Yao and Shanelle Roman and Zilin Zhang and Dragomir Radev},
+  booktitle = "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+  address   = "Brussels, Belgium",
+  publisher = "Association for Computational Linguistics",
+  year      = 2018
+}
