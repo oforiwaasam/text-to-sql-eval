@@ -2,7 +2,7 @@ import json
 import sqlite3
 import os
 
-with open('spider_data/spider_data/dev.json', 'r') as f:
+with open('spider_data/dev.json', 'r') as f:
     spider_data = json.load(f)
 
 sample = spider_data[0]
@@ -14,7 +14,7 @@ print(f"NL Question: {question}")
 print(f"Target DB: {db_id}")
 print(f"Expected SQL: {expected_sql}\n")
 
-db_path = os.path.join('spider_data', 'spider_data', 'database', db_id, f"{db_id}.sqlite")
+db_path = os.path.join('spider_data', 'database', db_id, f"{db_id}.sqlite")
 
 # Initialize conn as None so the 'finally' block doesn't crash
 conn = None
