@@ -20,14 +20,14 @@ def get_database_schema(db_path):
     # Combine all CREATE TABLE statements into one string
     return "\n".join([row[0] for row in schema_rows if row[0]])
 
-with open('spider_data/spider_data/dev.json', 'r') as f:
+with open('spider_data/dev.json', 'r') as f:
     spider_data = json.load(f)
 
 sample = spider_data[0]
 question = sample['question']
 db_id = sample['db_id'] 
 
-db_path = os.path.join('spider_data', 'spider_data', 'database', db_id, f"{db_id}.sqlite")
+db_path = os.path.join('spider_data', 'database', db_id, f"{db_id}.sqlite")
 absolute_path = os.path.abspath(db_path)
 schema = get_database_schema(absolute_path)
 
@@ -46,7 +46,7 @@ You must respond ONLY with a JSON object containing exactly two keys:
 """
 
 response = client.chat.completions.create(
-    model="llama-3.1-8b-instant", # Free and very fast!
+    model="llama-3.1-8b-instant",
     response_format={ "type": "json_object" }, 
     messages=[
         {"role": "system", "content": system_prompt},
