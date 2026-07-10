@@ -9,7 +9,7 @@ from groq import Groq
 load_dotenv()
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# Number of questions to evaluate (Starting with 100 for first real run)
+# Number of questions to evaluate
 NUM_SAMPLES = 100 
 CSV_FILENAME = "evaluation_results.csv"
 
@@ -32,10 +32,10 @@ def execute_sql(db_path, query):
     except Exception:
         return None
 
-with open('spider_data/spider_data/dev.json', 'r') as f:
+with open('spider_data/dev.json', 'r') as f:
     spider_data = json.load(f)
 
-# We slice the list to only take the first NUM_SAMPLES
+# Slice the list to only take the first NUM_SAMPLES
 test_samples = spider_data[:NUM_SAMPLES]
 
 # Open the CSV file in 'write' mode and add the header row
@@ -50,7 +50,7 @@ with open(CSV_FILENAME, mode='w', newline='', encoding='utf-8') as file:
         expected_sql = sample['query']
         db_id = sample['db_id'] 
         
-        db_path = os.path.join('spider_data', 'spider_data', 'database', db_id, f"{db_id}.sqlite")
+        db_path = os.path.join('spider_data', 'database', db_id, f"{db_id}.sqlite")
         absolute_path = os.path.abspath(db_path)
         
         print(f"[{i+1}/{NUM_SAMPLES}] Processing DB: {db_id}...")
