@@ -1,25 +1,35 @@
-# Evaluating Text-to-SQL Calibration and LLM Overconfidence
+# Evaluating Text-to-SQL Calibration and LLM Overconfidence Across Architectures
 
 ## Abstract
-As Generative AI is increasingly deployed in enterprise environments, model reliability and calibration become critical safety metrics. This project evaluates the confidence calibration of Open-Source LLMs (Llama-3.1-8B) on the complex **Spider** Text-to-SQL benchmark. 
+As Generative AI is increasingly deployed in enterprise environments, model reliability and calibration become critical safety metrics. This project evaluates the confidence calibration of 13 different Open-Source LLMs—spanning various parameter scales (7B to 120B) and model families—on the complex **Spider** Text-to-SQL benchmark. 
 
 ## Methodology
 1. **Dataset:** Evaluated 100 zero-shot natural language queries against complex SQLite schemas.
-2. **Inference:** Prompted the model to output a JSON object containing the generated SQL and a self-assessed `confidence_score` (0.0 to 1.0).
+2. **Inference (Groq API):** Prompted 13 distinct models to output a JSON object containing the generated SQL and a self-assessed `confidence_score` (0.0 to 1.0).
 3. **Execution Match:** Bypassed simple string comparison by executing both the LLM-generated SQL and the Gold Standard SQL against local databases to verify identical row outputs.
-4. **Calibration Math:** Calculated the **Expected Calibration Error (ECE)** to measure the gap between model confidence and actual execution accuracy.
+4. **Calibration Math:** Calculated the **Expected Calibration Error (ECE)** for each model to measure the gap between model confidence and actual execution accuracy.
 
-## Results
-The model demonstrated severe overconfidence in its SQL generation capabilities:
-* **Overall Accuracy:** 70.0%
-* **Average Confidence:** 98.4%
-* **Expected Calibration Error (ECE):** 0.2840
+## Results & Analysis
+By evaluating across a wide spectrum of models, several key calibration behaviors emerged:
 
-![Reliability Diagram](reliability_diagram.png)
+* **The Scale Hypothesis:** Contrary to the expectation that larger models are more "self-aware," increasing parameter size (e.g., from 8B to 70B in the Llama-3 family) did not inherently improve intrinsic calibration. Larger models remained highly overconfident, clustering near ~98% confidence despite hovering around ~74% actual accuracy. 
+* **Architectural Differences:** The Expected Calibration Error (ECE) scores remained stubbornly consistent (ranging tightly between 0.234 and 0.244) across almost all models tested (Llama, Qwen, and OpenAI-OSS variants). This indicates that severe overconfidence in zero-shot code generation is a systemic trait across modern LLM training paradigms, rather than a quirk of a specific architecture.
+
+### Multi-Model Calibration 
+The chart below highlights the massive gap between the "Perfect Calibration" baseline (gray dashed line) and the models' actual performance, demonstrating universal overconfidence.
+
+![Multi-Model Reliability Diagram](multi_model_reliability_diagram.png)
+
+### Confidence Distributions (Small Multiples)
+While the comparative graph above shows the relative calibration curves, it obscures the actual distribution of the models' confidence scores. The grid below reveals the underlying histograms (orange bars). 
+
+Notice how almost all models exhibit extreme confidence clustering at the absolute maximum (~1.0), entirely failing to utilize the lower probability buckets even when they generate incorrect SQL.
+
+![Grid View Reliability Diagrams](reliability_grid_view.png)
 
 ## Future Work
-* Evaluate post-hoc calibration techniques (e.g., Temperature Scaling) to align confidence with accuracy.
-* Expand the evaluation pipeline to multi-turn interactions and larger parameter models.
+* Evaluate post-hoc calibration techniques (e.g., Temperature Scaling or Platt Scaling) to align confidence with accuracy across the worst-performing architectures.
+* Expand the evaluation pipeline to multi-turn interactions and state-dependent systems.
 
 ## Acknowledgements & Citations
 This evaluation framework utilizes the **Spider (1.0)** dataset for complex, cross-domain Text-to-SQL benchmarking. 
