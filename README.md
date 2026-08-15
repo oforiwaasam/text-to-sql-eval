@@ -1,12 +1,12 @@
 # Evaluating Text-to-SQL Calibration and LLM Overconfidence Across Architectures
 
 ## Abstract
-As Generative AI is increasingly deployed in enterprise environments, model reliability and calibration become critical safety metrics. This project evaluates the confidence calibration of 13 different Open-Source LLMs, spanning various parameter scales (7B to 120B) and model families, on the complex **Spider** Text-to-SQL benchmark. 
+As Generative AI is increasingly deployed in enterprise environments, model reliability and calibration have become critical safety metrics. This project evaluates the confidence calibration of 13 different Open-Source LLMs, spanning various parameter scales (7B to 120B) and model families, on the complex **Spider** Text-to-SQL benchmark. 
 
 ## Methodology
-1. **Dataset:** Evaluated 100 zero-shot natural language queries against complex SQLite schemas.
-2. **Inference (Groq API):** Prompted 13 distinct models to output a JSON object containing the generated SQL and a self-assessed `confidence_score` (0.0 to 1.0).
-3. **Execution Match:** Bypassed simple string comparison by executing both the LLM-generated SQL and the Gold Standard SQL against local databases to verify identical row outputs.
+1. **Dataset:** Evaluated 100 zero-shot natural language queries from the Spider dataset against complex SQLite schemas.
+2. **Inference (Groq API):** Prompted 13 distinct models to output a JSON object containing the generated SQL and a self-assessed `confidence_score` between 0.0 to 1.0.
+3. **Execution Match:** Bypassed simple string comparison by executing both the LLM-generated SQL and the Gold Standard SQL against the same database to verify identical row outputs.
 4. **Calibration Math:** Calculated the **Expected Calibration Error (ECE)** for each model to measure the gap between model confidence and actual execution accuracy.
 
 ## Results & Analysis
