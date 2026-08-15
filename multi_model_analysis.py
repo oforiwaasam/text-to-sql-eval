@@ -3,11 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-# --- 1. Load the Data ---
+
 CSV_FILENAME = 'mass_evaluation_results.csv'
 df = pd.read_csv(CSV_FILENAME)
 
-# Clean data: drop rows where API failed or returned bad JSON
 df = df.dropna(subset=['Confidence', 'Is_Correct'])
 df['Is_Correct'] = df['Is_Correct'].astype(bool)
 
@@ -17,17 +16,15 @@ print(f"📊 Analyzing data for {len(models)} models...\n")
 num_bins = 10
 bins = np.linspace(0, 1.0, num_bins + 1)
 
-# Prepare the plot
+# Plot
 plt.figure(figsize=(12, 10))
 plt.plot([0, 1], [0, 1], linestyle='--', color='gray', linewidth=2, label='Perfect Calibration')
 
-# We'll use a colormap to automatically assign different colors to different models
 colors = cm.tab20(np.linspace(0, 1, len(models)))
 
 # Store results for the console leaderboard
 results_summary = []
 
-# --- 2. Iterate and Calculate for Each Model ---
 for idx, model in enumerate(models):
     model_df = df[df['Model_Name'] == model]
     n_total = len(model_df)
@@ -78,7 +75,7 @@ for idx, model in enumerate(models):
     # Plot this model's line
     plt.plot(valid_confs, valid_accs, marker='o', markersize=4, color=colors[idx], linewidth=1.5, alpha=0.8, label=f"{model} (ECE: {ece:.3f})")
 
-# --- 3. Finalize Visualization ---
+
 plt.xlabel('Confidence Score (Predicted Probability)', fontsize=12)
 plt.ylabel('Actual Accuracy (Execution Match)', fontsize=12)
 plt.title('Multi-Model Reliability Diagram: Text-to-SQL Calibration', fontsize=14, pad=20)
@@ -93,11 +90,10 @@ plt.savefig('multi_model_reliability_diagram.png', dpi=300, bbox_inches='tight')
 print("✅ Chart generated and saved as 'multi_model_reliability_diagram.png'\n")
 plt.show()
 
-# --- 4. Print Leaderboard ---
 print("-" * 65)
 print(f"{'Model Name':<40} | {'Acc':<5} | {'Conf':<5} | {'ECE':<5}")
 print("-" * 65)
-# Sort by ECE (lowest is best)
+# Sort by ECE
 results_summary.sort(key=lambda x: x['ECE'])
 for res in results_summary:
     print(f"{res['Model']:<40} | {res['Accuracy']:.3f} | {res['Confidence']:.3f} | {res['ECE']:.3f}")

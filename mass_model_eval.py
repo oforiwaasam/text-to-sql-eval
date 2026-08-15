@@ -122,4 +122,4 @@ with open(CSV_FILENAME, mode='w', newline='', encoding='utf-8') as file:
             # Rate Limiting: Pause for 1.5 seconds so Groq doesn't block us
             time.sleep(1.5)
 
-print(f"\n✅ Mass modelevaluation complete! Check your folder for '{CSV_FILENAME}'.")
+print(f"\n✅ Mass model evaluation complete! Check your folder for '{CSV_FILENAME}'.")
