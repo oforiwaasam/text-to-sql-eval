@@ -5,28 +5,25 @@ import csv
 import time
 from dotenv import load_dotenv
 from groq import Groq
+from groq import RateLimitError
+
 
 load_dotenv()
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # Number of questions to evaluate
-NUM_SAMPLES = 100 
+NUM_SAMPLES = 100
 CSV_FILENAME = "mass_evaluation_results.csv"
+SLEEP_SECONDS = 2.5
+MAX_RETRIES = 3
 MODELS_TO_TEST = [
-    "allam-2-7b",
-    "groq/compound",
-    "groq/compound-mini",
-    "llama-3.1-8b-instant",
+    "llama-3.1-8b-instant",       
     "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "meta-llama/llama-prompt-guard-2-22m",
-    "meta-llama/llama-prompt-guard-2-86m",
-    "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
-    "openai/gpt-oss-safeguard-20b",
-    "qwen/qwen3-32b",
-    "qwen/qwen3.6-27b"
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b",
 ]
+
 
 def get_database_schema(db_path):
     conn = sqlite3.connect(db_path)
@@ -46,6 +43,38 @@ def execute_sql(db_path, query):
         return results
     except Exception:
         return None
+
+
+def call_model_with_retry(model_name, system_prompt, question):
+    """Retries on rate-limit errors specifically, so 429s don't get logged
+    as model failures. Raises the last exception if all retries are exhausted."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return client.chat.completions.create(
+                model=model_name,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": question}
+                ],
+                temperature=0.0
+            )
+        except RateLimitError:
+            wait = SLEEP_SECONDS * (2 ** (attempt + 1))  # backoff: 5s, 10s, 20s
+            print(f"   ⏳ Rate limited, waiting {wait}s (attempt {attempt+1}/{MAX_RETRIES})...")
+            time.sleep(wait)
+
+    # Final attempt — let it raise if it fails again, caller will log as a real error
+    return client.chat.completions.create(
+        model=model_name,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ],
+        temperature=0.0
+    )
+
 
 with open('spider_data/dev.json', 'r') as f:
     spider_data = json.load(f)
@@ -70,7 +99,7 @@ with open(CSV_FILENAME, mode='w', newline='', encoding='utf-8') as file:
             db_path = os.path.join('spider_data', 'database', db_id, f"{db_id}.sqlite")
             absolute_path = os.path.abspath(db_path)
         
-            print(f"[{i+1}/{NUM_SAMPLES}] Processing DB: {db_id}...")
+            print(f"[{i+1}/{NUM_SAMPLES}] Model: {model_name} | DB: {db_id}...")
 
             try:
                 schema = get_database_schema(absolute_path)
@@ -84,15 +113,7 @@ with open(CSV_FILENAME, mode='w', newline='', encoding='utf-8') as file:
                 2. "confidence_score": A float between 0.0 and 1.0.
                 """
 
-                response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    response_format={ "type": "json_object" }, 
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": question}
-                    ],
-                    temperature=0.0 
-                )
+                response = call_model_with_retry(model_name, system_prompt, question)
 
                 # Parse Output
                 llm_output = json.loads(response.choices[0].message.content)
@@ -114,12 +135,20 @@ with open(CSV_FILENAME, mode='w', newline='', encoding='utf-8') as file:
                 # Write to CSV
                 writer.writerow([model_name, i+1, db_id, question, expected_sql, generated_sql, confidence, is_correct, error_note])
 
+            except RateLimitError as e:
+                # Distinguished from other failures so it doesn't silently count against the model's accuracy in this analysis.
+                print(f"⚠️ Rate limit exhausted retries on model {model_name}, question {i+1}: {e}")
+                writer.writerow([model_name, i+1, db_id, question, expected_sql, "ERROR", 0.0, False, f"Rate Limit Error: {e}"])
+
             except Exception as e:
-                # If API fails or JSON is mangled, log the error but KEEP GOING
-                print(f"⚠️ Error on question {i+1}: {e}")
+                # If API fails, model is unavailable, or JSON is mangled, log the error but KEEP GOING
+                print(f"⚠️ Error on model {model_name}, question {i+1}: {e}")
                 writer.writerow([model_name, i+1, db_id, question, expected_sql, "ERROR", 0.0, False, str(e)])
 
-            # Rate Limiting: Pause for 1.5 seconds so Groq doesn't block us
-            time.sleep(1.5)
+            # Flush after every row so a mid-run crash doesn't lose progress.
+            file.flush()
+
+            # Rate Limiting: Pause for {SLEEP_SECONDS} seconds so Groq doesn't block us
+            time.sleep(SLEEP_SECONDS)
 
 print(f"\n✅ Mass model evaluation complete! Check your folder for '{CSV_FILENAME}'.")
